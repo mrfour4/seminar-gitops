@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: 6f03ee0f86cb958c270994f7ee6c8b98807fd356
+  tag: invalid-tag-xyz
   pullPolicy: IfNotPresent
 
 service:
