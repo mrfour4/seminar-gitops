@@ -20,6 +20,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: seminar-db-secret
+                  key: DATABASE_URL
           readinessProbe:
             httpGet:
               path: /
