@@ -3,8 +3,13 @@ kind: Ingress
 metadata:
   name: nextjs-ingress
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
+  tls:
+    - hosts:
+        - seminar.local
+      secretName: seminar-local-tls
   rules:
     - host: seminar.local
       http:
