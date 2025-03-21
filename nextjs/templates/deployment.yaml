@@ -21,11 +21,19 @@ spec:
           ports:
             - containerPort: {{ .Values.service.targetPort }}
           env:
+            # 🔐 Secret env (sealed secret)
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: seminar-db-secret
+                  name: seminar-secret
                   key: DATABASE_URL
+
+            # 🌍 Public env (from values.yaml)
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: "{{ .value }}"
+            {{- end }}
+
           readinessProbe:
             httpGet:
               path: /
