@@ -1,0 +1,30 @@
+name: Auto Rollback on Argo CD Failure
+
+on:
+  repository_dispatch:
+    types: [argo-degraded]
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50
+
+      - name: Print received data
+        run: |
+          echo "App: ${{ github.event.client_payload.app }}"
+          echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
+
+      - name: Revert commit
+        run: |
+          git config user.name "GitOps Bot"
+          git config user.email "gitops-bot@example.com"
+          git revert ${{ github.event.client_payload.failed_revision }} --no-edit || true
+          git push origin HEAD:main
+
+      - name: Verify rollback
+        run: |
+          git log -1
