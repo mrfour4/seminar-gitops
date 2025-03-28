@@ -22,8 +22,13 @@ jobs:
           TOKEN=$(curl -k -s -X POST \
             "$ARGOCD_SERVER/api/v1/session" \
             -d "{\"username\": \"$ARGOCD_USERNAME\", \"password\": \"$ARGOCD_PASSWORD\"}" \
-            -H "Content-Type: application/json" \
-            | jq -r .token)
+            -H "Content-Type: application/json" | jq -r .token)
+          
+          if [ -z "$TOKEN" ]; then
+            echo "Failed to obtain Argo CD token"
+            exit 1
+          fi
+          
           echo "ARGOCD_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "Argo CD Token: $TOKEN"
 
