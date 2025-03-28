@@ -1,12 +1,12 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: "does-not-exist-5"
+  tag: "ec118fdeb0320b64fe11c36e8fa86d2bec761ed2"
   pullPolicy: IfNotPresent
 
 service:
   type: NodePort
   port: 80
-  targetPort: 9999
+  targetPort: 3000
 
 replicaCount: 1
 
