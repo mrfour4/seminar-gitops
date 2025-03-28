@@ -15,7 +15,7 @@ jobs:
 
       - name: Get Argo CD Token
         env:
-          ARGOCD_SERVER: "https://localhost:8080"
+          ARGOCD_SERVER: "https://sure-mighty-polecat.ngrok-free.app"
           ARGOCD_USERNAME: "admin"
           ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
         run: |
@@ -35,7 +35,7 @@ jobs:
 
       - name: Get Last Healthy Revision
         env:
-          ARGOCD_SERVER: "https://localhost:8080"
+          ARGOCD_SERVER: "https://sure-mighty-polecat.ngrok-free.app"
           APP_NAME: "seminar-nextjs"
           ARGOCD_TOKEN: ${{ env.ARGOCD_TOKEN }}
         run: |
