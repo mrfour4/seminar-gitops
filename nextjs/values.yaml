@@ -6,7 +6,7 @@ image:
 service:
   type: NodePort
   port: 80
-  targetPort: 3000
+  targetPort: 9999
 
 replicaCount: 1
 
