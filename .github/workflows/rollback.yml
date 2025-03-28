@@ -33,15 +33,39 @@ jobs:
           APP_NAME: "seminar-nextjs"
           ARGOCD_TOKEN: ${{ env.ARGOCD_TOKEN }}
         run: |
+          # Lấy toàn bộ thông tin từ Argo CD API
           curl -k -s -X GET \
             "$ARGOCD_SERVER/api/v1/applications/$APP_NAME" \
             -H "Authorization: Bearer $ARGOCD_TOKEN" \
-            -H "Content-Type: application/json" \
-            | jq '.status.history | reverse | map(select(.health.status == "Healthy")) | .[0]' > healthy_commit.json
-          cat healthy_commit.json
-          LAST_HEALTHY_COMMIT=$(jq -r '.revision' healthy_commit.json)
+            -H "Content-Type: application/json" > argo_response.json
+
+          echo "Argo CD Application Response:"
+          cat argo_response.json
+
+          # Lấy trạng thái hiện tại của ứng dụng
+          CURRENT_HEALTH=$(jq -r '.status.health.status' argo_response.json)
+          CURRENT_REVISION=$(jq -r '.status.sync.revision' argo_response.json)
+
+          # Nếu trạng thái hiện tại là Healthy, sử dụng commit hiện tại
+          if [[ "$CURRENT_HEALTH" == "Healthy" ]]; then
+            LAST_HEALTHY_COMMIT=$CURRENT_REVISION
+            echo "Currently Healthy, using latest revision: $LAST_HEALTHY_COMMIT"
+          else
+            # Nếu không Healthy, tìm commit Healthy gần nhất từ lịch sử
+            LAST_HEALTHY_COMMIT=$(jq -r '.status.history | reverse | map(select(.revision == "'$CURRENT_REVISION'")) | .[0].revision' argo_response.json)
+            if [[ -z "$LAST_HEALTHY_COMMIT" ]]; then
+              echo "No healthy commit found, using latest available revision."
+              LAST_HEALTHY_COMMIT=$(jq -r '.status.history | reverse | .[0].revision' argo_response.json)
+            fi
+          fi
+
+          if [[ -z "$LAST_HEALTHY_COMMIT" ]]; then
+            echo "Error: No healthy commit found!"
+            exit 1
+          fi
+
           echo "LAST_HEALTHY_COMMIT=$LAST_HEALTHY_COMMIT" >> $GITHUB_ENV
-          echo "Last Healthy Commit: $LAST_HEALTHY_COMMIT"
+          echo "Last Healthy or Latest Commit: $LAST_HEALTHY_COMMIT"
 
       - name: Check if healthy commit was found
         if: env.LAST_HEALTHY_COMMIT == ''
