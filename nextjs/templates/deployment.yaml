@@ -34,33 +34,10 @@ spec:
               value: "{{ .value }}"
             {{- end }}
 
-          # 🛑 Readiness Probe (giảm thời gian chuyển trạng thái)
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 3
-            periodSeconds: 5
-            failureThreshold: 2
-            timeoutSeconds: 2
-
-          # 💔 Liveness Probe (giảm thời gian phát hiện lỗi)
-          livenessProbe:
-            httpGet:
-              path: /
-              port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 3
-            periodSeconds: 5
-            failureThreshold: 2
-            timeoutSeconds: 2
-
-      # 🚀 Restart Policy và Backoff
-      restartPolicy: Always
-      terminationGracePeriodSeconds: 5
-
-      # 🚦 Cấu hình giảm Backoff
-      imagePullSecrets:
-        - name: regcred
-      activeDeadlineSeconds: 60
-      backoffLimit: 1
-
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
