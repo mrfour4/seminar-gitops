@@ -34,10 +34,26 @@ spec:
               value: "{{ .value }}"
             {{- end }}
 
+          # 🩺 Readiness Probe (giảm thời gian phản hồi)
           readinessProbe:
             httpGet:
               path: /
               port: {{ .Values.service.targetPort }}
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 3
+            initialDelaySeconds: 3    # Giảm thời gian chờ ban đầu
+            periodSeconds: 5          # Kiểm tra sau mỗi 5 giây
+            failureThreshold: 2       # Chỉ cho phép thất bại 2 lần
+            timeoutSeconds: 2         # Giảm thời gian chờ phản hồi
+
+          # ❤️ Liveness Probe (giảm thời gian phản hồi)
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 3    # Giảm thời gian chờ ban đầu
+            periodSeconds: 5          # Kiểm tra sau mỗi 5 giây
+            failureThreshold: 2       # Chỉ cho phép thất bại 2 lần
+            timeoutSeconds: 2         # Giảm thời gian chờ phản hồi
+
+      # 🔄 Restart Policy và Backoff Limit
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 5
