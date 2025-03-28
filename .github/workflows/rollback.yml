@@ -25,7 +25,7 @@ jobs:
 
       - name: Get Last Healthy Revision
         env:
-          ARGOCD_SERVER: "https://localhost:8080"
+          ARGOCD_SERVER: "https://sure-mighty-polecat.ngrok-free.app"
           APP_NAME: "seminar-nextjs"
           ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
         run: |
