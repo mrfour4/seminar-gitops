@@ -19,27 +19,41 @@ jobs:
           ARGOCD_USERNAME: "admin"
           ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
         run: |
-          TOKEN=$(curl -s -X POST \
+          TOKEN=$(curl -k -s -X POST \
             "$ARGOCD_SERVER/api/v1/session" \
-            -d '{"username": "'$ARGOCD_USERNAME'", "password": "'$ARGOCD_PASSWORD'"}' \
+            -d "{\"username\": \"$ARGOCD_USERNAME\", \"password\": \"$ARGOCD_PASSWORD\"}" \
             -H "Content-Type: application/json" \
             | jq -r .token)
           echo "ARGOCD_TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "Argo CD Token: $TOKEN"
 
       - name: Get Last Healthy Revision
         env:
-          ARGOCD_SERVER: "https://argocd.example.com"
+          ARGOCD_SERVER: "https://localhost:8080"
           APP_NAME: "seminar-nextjs"
           ARGOCD_TOKEN: ${{ env.ARGOCD_TOKEN }}
         run: |
-          curl -s -X GET \
+          curl -k -s -X GET \
             "$ARGOCD_SERVER/api/v1/applications/$APP_NAME" \
             -H "Authorization: Bearer $ARGOCD_TOKEN" \
             -H "Content-Type: application/json" \
-            | jq '.status.history[] | select(.health.status == "Healthy")' > healthy_commits.json
-          LAST_HEALTHY_COMMIT=$(jq -r '.[-1].revision' healthy_commits.json)
+            | jq '.status.history | reverse | map(select(.health.status == "Healthy")) | .[0]' > healthy_commit.json
+          cat healthy_commit.json
+          LAST_HEALTHY_COMMIT=$(jq -r '.revision' healthy_commit.json)
           echo "LAST_HEALTHY_COMMIT=$LAST_HEALTHY_COMMIT" >> $GITHUB_ENV
           echo "Last Healthy Commit: $LAST_HEALTHY_COMMIT"
+
+      - name: Check if healthy commit was found
+        if: env.LAST_HEALTHY_COMMIT == ''
+        run: |
+          echo "Error: No healthy commit found!"
+          exit 1
+
+      - name: Print received data
+        run: |
+          echo "App: ${{ github.event.client_payload.app }}"
+          echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
+          echo "Last Healthy Commit: ${{ env.LAST_HEALTHY_COMMIT }}"
 
       - name: Rollback to Last Healthy Commit
         run: |
