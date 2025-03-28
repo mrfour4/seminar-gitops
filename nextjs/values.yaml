@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: 5549249aef27235dfa31ce2ce1e57ee835dcb3b7
+  tag: "non-image-tag"
   pullPolicy: IfNotPresent
 
 service:
