@@ -13,16 +13,39 @@ jobs:
         with:
           fetch-depth: 50
 
-      - name: Print received data
+      - name: Get Argo CD Token
+        env:
+          ARGOCD_SERVER: "https://argocd.example.com"
+          ARGOCD_USERNAME: "admin"
+          ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
         run: |
-          echo "App: ${{ github.event.client_payload.app }}"
-          echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
+          TOKEN=$(curl -s -X POST \
+            "$ARGOCD_SERVER/api/v1/session" \
+            -d '{"username": "'$ARGOCD_USERNAME'", "password": "'$ARGOCD_PASSWORD'"}' \
+            -H "Content-Type: application/json" \
+            | jq -r .token)
+          echo "ARGOCD_TOKEN=$TOKEN" >> $GITHUB_ENV
 
-      - name: Revert commit
+      - name: Get Last Healthy Revision
+        env:
+          ARGOCD_SERVER: "https://argocd.example.com"
+          APP_NAME: "seminar-nextjs"
+          ARGOCD_TOKEN: ${{ env.ARGOCD_TOKEN }}
+        run: |
+          curl -s -X GET \
+            "$ARGOCD_SERVER/api/v1/applications/$APP_NAME" \
+            -H "Authorization: Bearer $ARGOCD_TOKEN" \
+            -H "Content-Type: application/json" \
+            | jq '.status.history[] | select(.health.status == "Healthy")' > healthy_commits.json
+          LAST_HEALTHY_COMMIT=$(jq -r '.[-1].revision' healthy_commits.json)
+          echo "LAST_HEALTHY_COMMIT=$LAST_HEALTHY_COMMIT" >> $GITHUB_ENV
+          echo "Last Healthy Commit: $LAST_HEALTHY_COMMIT"
+
+      - name: Rollback to Last Healthy Commit
         run: |
           git config user.name "GitOps Bot"
           git config user.email "gitops-bot@example.com"
-          git revert ${{ github.event.client_payload.failed_revision }} --no-edit || true
+          git revert ${{ github.event.client_payload.failed_revision }}..${{ env.LAST_HEALTHY_COMMIT }} --no-edit || true
           git push origin HEAD:main
 
       - name: Verify rollback
