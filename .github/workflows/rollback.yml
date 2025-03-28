@@ -13,31 +13,21 @@ jobs:
         with:
           fetch-depth: 50
 
-      - name: Get Argo CD Token
+      - name: Load Argo CD Token from Secrets
         env:
-          ARGOCD_SERVER: "https://sure-mighty-polecat.ngrok-free.app"
-          ARGOCD_USERNAME: "admin"
-          ARGOCD_PASSWORD: ${{ secrets.ARGOCD_PASSWORD }}
+          ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
         run: |
-          TOKEN=$(curl -k -s -X POST \
-            "$ARGOCD_SERVER/api/v1/session" \
-            -d "{\"username\": \"$ARGOCD_USERNAME\", \"password\": \"$ARGOCD_PASSWORD\"}" \
-            -H "Content-Type: application/json" \
-            | jq -r .token)
-
-          if [ -z "$TOKEN" ]; then
-            echo "Failed to obtain Argo CD token"
+          if [ -z "$ARGOCD_TOKEN" ]; then
+            echo "Error: ARGOCD_TOKEN is not set!"
             exit 1
           fi
-
-          echo "ARGOCD_TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "Argo CD Token: $TOKEN"
+          echo "ARGOCD_TOKEN loaded successfully"
 
       - name: Get Last Healthy Revision
         env:
-          ARGOCD_SERVER: "https://sure-mighty-polecat.ngrok-free.app"
+          ARGOCD_SERVER: "https://localhost:8080"
           APP_NAME: "seminar-nextjs"
-          ARGOCD_TOKEN: ${{ env.ARGOCD_TOKEN }}
+          ARGOCD_TOKEN: ${{ secrets.ARGOCD_TOKEN }}
         run: |
           # Lấy toàn bộ thông tin từ Argo CD API
           curl -k -s -X GET \
