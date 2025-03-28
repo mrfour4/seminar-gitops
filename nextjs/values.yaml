@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: "does-not-exist-3"
+  tag: "does-not-exist-4"
   pullPolicy: IfNotPresent
 
 service:
