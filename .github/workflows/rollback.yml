@@ -22,13 +22,14 @@ jobs:
           TOKEN=$(curl -k -s -X POST \
             "$ARGOCD_SERVER/api/v1/session" \
             -d "{\"username\": \"$ARGOCD_USERNAME\", \"password\": \"$ARGOCD_PASSWORD\"}" \
-            -H "Content-Type: application/json" | jq -r .token)
-          
+            -H "Content-Type: application/json" \
+            | jq -r .token)
+
           if [ -z "$TOKEN" ]; then
             echo "Failed to obtain Argo CD token"
             exit 1
           fi
-          
+
           echo "ARGOCD_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "Argo CD Token: $TOKEN"
 
@@ -57,7 +58,7 @@ jobs:
             echo "Currently Healthy, using latest revision: $LAST_HEALTHY_COMMIT"
           else
             # Nếu không Healthy, tìm commit Healthy gần nhất từ lịch sử
-            LAST_HEALTHY_COMMIT=$(jq -r '.status.history | reverse | map(select(.revision == "'$CURRENT_REVISION'")) | .[0].revision' argo_response.json)
+            LAST_HEALTHY_COMMIT=$(jq -r '.status.history | reverse | map(select(.health.status == "Healthy")) | .[0].revision' argo_response.json)
             if [[ -z "$LAST_HEALTHY_COMMIT" ]]; then
               echo "No healthy commit found, using latest available revision."
               LAST_HEALTHY_COMMIT=$(jq -r '.status.history | reverse | .[0].revision' argo_response.json)
@@ -85,10 +86,13 @@ jobs:
           echo "Last Healthy Commit: ${{ env.LAST_HEALTHY_COMMIT }}"
 
       - name: Rollback to Last Healthy Commit
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "GitOps Bot"
           git config user.email "gitops-bot@example.com"
           git revert ${{ github.event.client_payload.failed_revision }}..${{ env.LAST_HEALTHY_COMMIT }} --no-edit || true
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
           git push origin HEAD:main
 
       - name: Verify rollback
