@@ -7,32 +7,21 @@ on:
 jobs:
   rollback:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout seminar-gitops repo
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 50
+          repository: mrfour4/seminar-gitops
+          token: ${{ secrets.PERSONAL_TOKEN }}
 
-      - name: Print received data for debugging
+      - name: Print environment variables for debugging
         run: |
-          echo "GitHub Token: $GH_PAT"
+          echo "GitHub Token: $PERSONAL_TOKEN"
           echo "App: ${{ github.event.client_payload.app }}"
           echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
-          echo "Last Healthy Commit: ${{ github.event.client_payload.healthy_revision }}"
+          echo "Last Healthy Commit: ${{ env.LAST_HEALTHY_COMMIT }}"
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-
-      - name: Get Last Healthy Commit
-        run: |
-          if [ -z "${{ github.event.client_payload.healthy_revision }}" ]; then
-            echo "Error: No healthy commit found!"
-            exit 1
-          fi
-          echo "LAST_HEALTHY_COMMIT=${{ github.event.client_payload.healthy_revision }}" >> $GITHUB_ENV
-
-      - name: Print Git logs
-        run: git log --oneline -10
+          PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
 
       - name: Revert to specific file from last healthy commit
         run: |
@@ -50,7 +39,8 @@ jobs:
           git commit -m "Auto rollback nextjs/values.yaml to healthy commit $LAST_HEALTHY_COMMIT after degraded state"
 
           # Đẩy thay đổi lên remote
-          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
+          git remote set-url origin https://x-access-token:${PERSONAL_TOKEN}@github.com/mrfour4/seminar-gitops
           git push origin HEAD:main
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          LAST_HEALTHY_COMMIT: ${{ github.event.client_payload.healthy_revision }}
