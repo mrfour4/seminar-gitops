@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: "tag-image-not-found"
+  tag: 05ad60278f408eb61a83a797887b222a21561c8e
   pullPolicy: IfNotPresent
 
 service:
