@@ -32,7 +32,7 @@ jobs:
         run: |
           git checkout ${{ env.commit_id }} -- nextjs/values.yaml
           git add nextjs/values.yaml
-          git commit -m "Revert values.yaml to commit ${{ env.commit_id }} via webhook"
+          git commit -m "Auto rollback nextjs/values.yaml to healthy commit ${{ env.commit_id }} via webhook after degraded state"
 
       # Push changes to remote
       - name: Push changes to seminar-gitops
