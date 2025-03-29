@@ -7,28 +7,50 @@ on:
 jobs:
   rollback:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 50
 
-      - name: Print received data
+      - name: Print received data for debugging
         run: |
+          echo "GitHub Token: $GH_PAT"
           echo "App: ${{ github.event.client_payload.app }}"
           echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
-          echo "Healthy Revision: ${{ github.event.client_payload.healthy_revision }}"
-
-      - name: Rollback to Last Healthy Commit
+          echo "Last Healthy Commit: ${{ github.event.client_payload.healthy_revision }}"
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+
+      - name: Get Last Healthy Commit
         run: |
+          if [ -z "${{ github.event.client_payload.healthy_revision }}" ]; then
+            echo "Error: No healthy commit found!"
+            exit 1
+          fi
+          echo "LAST_HEALTHY_COMMIT=${{ github.event.client_payload.healthy_revision }}" >> $GITHUB_ENV
+
+      - name: Print Git logs
+        run: git log --oneline -10
+
+      - name: Revert to specific file from last healthy commit
+        run: |
+          echo "Reverting nextjs/values.yaml to commit: $LAST_HEALTHY_COMMIT"
+
+          # Khôi phục nội dung file về commit đã nhận
+          git checkout $LAST_HEALTHY_COMMIT -- nextjs/values.yaml
+
+          # Kiểm tra sự khác biệt
+          git status
+
+          # Commit thay đổi
           git config user.name "GitOps Bot"
           git config user.email "gitops-bot@example.com"
-          git revert ${{ github.event.client_payload.failed_revision }}..${{ github.event.client_payload.healthy_revision }} --no-edit || true
+          git commit -m "Auto rollback nextjs/values.yaml to healthy commit $LAST_HEALTHY_COMMIT after degraded state"
+
+          # Đẩy thay đổi lên remote
           git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
           git push origin HEAD:main
-
-      - name: Verify rollback
-        run: |
-          git log -1
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
