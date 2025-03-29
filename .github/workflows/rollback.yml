@@ -13,14 +13,45 @@ jobs:
         with:
           fetch-depth: 50
 
+      - name: Debug GitHub Token
+        run: echo "GitHub Token: ${{ secrets.GH_PAT }}"
+
+      - name: Print received data from webhook
+        run: |
+          echo "App: ${{ github.event.client_payload.app }}"
+          echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
+          echo "Last Healthy Commit: ${{ env.LAST_HEALTHY_COMMIT }}"
+
+      - name: Get latest commit
+        run: git log -1
+
       - name: Rollback to Last Healthy Commit
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
+          LAST_HEALTHY_COMMIT: ${{ env.LAST_HEALTHY_COMMIT }}
         run: |
-          echo "Reverting to commit: ${{ env.LAST_HEALTHY_COMMIT }}"
+          echo "Reverting to commit: $LAST_HEALTHY_COMMIT"
           git config user.name "GitOps Bot"
           git config user.email "gitops-bot@example.com"
+
+          # Thử in ra các commit trước khi revert
+          git log --oneline -10
+
+          # Xử lý lỗi rollback với cú pháp git revert
+          if [ -z "$LAST_HEALTHY_COMMIT" ]; then
+            echo "Error: No healthy commit found!"
+            exit 1
+          fi
+
+          # Thực hiện revert commit
+          git revert --no-commit HEAD..$LAST_HEALTHY_COMMIT || true
+          git commit -m "Auto rollback to healthy commit $LAST_HEALTHY_COMMIT after degraded state"
+
+          # Đẩy thay đổi lên GitHub
           git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
-          git revert --no-commit ${{ github.event.client_payload.failed_revision }}..${{ env.LAST_HEALTHY_COMMIT }} || true
-          git commit -m "Auto rollback to healthy commit ${{ env.LAST_HEALTHY_COMMIT }} after degraded state"
           git push origin HEAD:main
+
+      - name: Verify rollback
+        run: |
+          echo "Verifying rollback..."
+          git log -1
