@@ -11,32 +11,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 50
 
-      - name: Print received data
-        run: |
-          echo "App: ${{ github.event.client_payload.app }}"
-          echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
-          echo "Healthy Revision: ${{ github.event.client_payload.healthy_revision }}"
-
-      - name: Set Git configuration
-        run: |
-          git config user.name "GitOps Bot"
-          git config user.email "gitops-bot@example.com"
-
-      - name: Checkout to main branch
-        run: |
-          git checkout main
-
-      - name: Revert to healthy commit
+      - name: Rollback to Last Healthy Commit
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          echo "Reverting to commit: ${{ github.event.client_payload.healthy_revision }}"
-          git revert --no-commit ${{ github.event.client_payload.failed_revision }}..${{ github.event.client_payload.healthy_revision }} || true
-          git commit -m "Auto rollback to healthy commit ${{ github.event.client_payload.healthy_revision }} after degraded state"
-          git push origin main
-
-      - name: Verify rollback
-        run: |
-          git log -1
+          echo "Reverting to commit: ${{ env.LAST_HEALTHY_COMMIT }}"
+          git config user.name "GitOps Bot"
+          git config user.email "gitops-bot@example.com"
+          git remote set-url origin https://x-access-token:${GH_PAT}@github.com/${{ github.repository }}
+          git revert --no-commit ${{ github.event.client_payload.failed_revision }}..${{ env.LAST_HEALTHY_COMMIT }} || true
+          git commit -m "Auto rollback to healthy commit ${{ env.LAST_HEALTHY_COMMIT }} after degraded state"
+          git push origin HEAD:main
