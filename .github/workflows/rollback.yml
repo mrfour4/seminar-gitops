@@ -13,17 +13,11 @@ jobs:
         with:
           fetch-depth: 50
 
-      - name: Debug GitHub Token
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
-        run: |
-          echo "GitHub Token: $GH_PAT"
-
       - name: Print received data from webhook
         run: |
           echo "App: ${{ github.event.client_payload.app }}"
           echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
-          echo "Last Healthy Commit: ${{ env.LAST_HEALTHY_COMMIT }}"
+          echo "Last Healthy Commit: ${{ github.event.client_payload.healthy_revision }}"
 
       - name: Get latest commit
         run: git log -1
@@ -31,16 +25,16 @@ jobs:
       - name: Rollback to Last Healthy Commit
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
-          LAST_HEALTHY_COMMIT: ${{ env.LAST_HEALTHY_COMMIT }}
+          LAST_HEALTHY_COMMIT: ${{ github.event.client_payload.healthy_revision }}
         run: |
           echo "Reverting to commit: $LAST_HEALTHY_COMMIT"
           git config user.name "GitOps Bot"
           git config user.email "gitops-bot@example.com"
 
-          # Thử in ra các commit trước khi revert
+          # In ra các commit trước khi revert
           git log --oneline -10
 
-          # Xử lý lỗi rollback với cú pháp git revert
+          # Kiểm tra commit hợp lệ
           if [ -z "$LAST_HEALTHY_COMMIT" ]; then
             echo "Error: No healthy commit found!"
             exit 1
