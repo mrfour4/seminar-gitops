@@ -14,30 +14,38 @@ jobs:
           repository: mrfour4/seminar-gitops
           token: ${{ secrets.PERSONAL_TOKEN }}
 
-      - name: Print environment variables for debugging
+      - name: Print environment variables
         run: |
-          echo "GitHub Token: $PERSONAL_TOKEN"
           echo "App: ${{ github.event.client_payload.app }}"
           echo "Failed Revision: ${{ github.event.client_payload.failed_revision }}"
           echo "Last Healthy Commit: ${{ env.LAST_HEALTHY_COMMIT }}"
         env:
           PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+          LAST_HEALTHY_COMMIT: ${{ github.event.client_payload.healthy_revision }}
+
+      - name: Fetch all commits
+        run: |
+          git fetch --all
+          git log --oneline -10
 
       - name: Revert to specific file from last healthy commit
         run: |
           echo "Reverting nextjs/values.yaml to commit: $LAST_HEALTHY_COMMIT"
-
+          
+          # Đảm bảo commit tồn tại bằng cách fetch đầy đủ
+          git fetch origin main
+          
           # Khôi phục nội dung file về commit đã nhận
           git checkout $LAST_HEALTHY_COMMIT -- nextjs/values.yaml
-
+          
           # Kiểm tra sự khác biệt
           git status
-
+          
           # Commit thay đổi
           git config user.name "GitOps Bot"
           git config user.email "gitops-bot@example.com"
           git commit -m "Auto rollback nextjs/values.yaml to healthy commit $LAST_HEALTHY_COMMIT after degraded state"
-
+          
           # Đẩy thay đổi lên remote
           git remote set-url origin https://x-access-token:${PERSONAL_TOKEN}@github.com/mrfour4/seminar-gitops
           git push origin HEAD:main
