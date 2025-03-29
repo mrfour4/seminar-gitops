@@ -33,4 +33,5 @@ jobs:
         env:
           GH_PAT_WEBHOOK: ${{ secrets.GH_PAT_WEBHOOK }}
         run: |
-          git push https://x-access-token:${{ secrets.GH_PAT_WEBHOOK }}@github.com/${{ github.repository }} HEAD:main
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT_WEBHOOK }}@github.com/${{ github.repository }}
+          git push origin HEAD:main
