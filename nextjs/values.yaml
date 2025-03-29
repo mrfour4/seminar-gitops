@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: 64c8a8211caad79ce0769125e28563fe8004da17
+  tag: 39145849405d64d844c0c781c77bf38562a9b343
   pullPolicy: IfNotPresent
 
 service:
