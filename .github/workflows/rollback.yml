@@ -14,7 +14,10 @@ jobs:
           fetch-depth: 50
 
       - name: Debug GitHub Token
-        run: echo "GitHub Token: ${{ secrets.GH_PAT }}"
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          echo "GitHub Token: $GH_PAT"
 
       - name: Print received data from webhook
         run: |
