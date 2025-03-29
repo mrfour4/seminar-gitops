@@ -1,0 +1,34 @@
+name: Revert values.yaml to specific commit
+
+on:
+  repository_dispatch:
+    types: [argo-degraded]
+
+jobs:
+  revert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Get commit ID
+        id: get_commit_id
+        run: echo "commit_id=${{ github.event.client_payload.healthy_revision }}" >> $GITHUB_ENV
+
+      - name: Revert values.yaml
+        run: |
+          git checkout ${{ env.commit_id }} -- nextjs/values.yaml
+          git add nextjs/values.yaml
+          git commit -m "Revert values.yaml to commit ${{ env.commit_id }} via webhook"
+      
+      - name: Push changes
+        env:
+          GH_PAT_WEBHOOK: ${{ secrets.GH_PAT_WEBHOOK }}
+        run: |
+          git push https://x-access-token:${{ secrets.GH_PAT_WEBHOOK }}@github.com/${{ github.repository }} HEAD:main
