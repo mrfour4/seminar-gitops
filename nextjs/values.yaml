@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: "image-not-found"  # clearly fake tag for demo
+  tag: b635b849f40f86ee80163785215e2ceeec489b1e
   pullPolicy: IfNotPresent
 
 service:
