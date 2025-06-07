@@ -3,12 +3,14 @@ kind: Application
 metadata:
   name: seminar-nextjs
   namespace: argocd
+  annotations:
+    notifications.argoproj.io/triggers: on-deployed,on-health-degraded
 spec:
   project: default
   source:
     repoURL: https://github.com/mrfour4/seminar-gitops
-    targetRevision: HEAD
     path: nextjs
+    targetRevision: HEAD
     helm:
       valueFiles:
         - values.yaml
