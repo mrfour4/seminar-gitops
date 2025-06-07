@@ -4,7 +4,8 @@ metadata:
   name: seminar-nextjs
   namespace: argocd
   annotations:
-    notifications.argoproj.io/triggers: on-deployed,on-health-degraded
+    notifications.argoproj.io/subscribe.on-deployed.webhook.bun-webhook: "true"
+    notifications.argoproj.io/subscribe.on-health-degraded.webhook.bun-webhook: "true"
 spec:
   project: default
   source:
