@@ -9,29 +9,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout seminar-gitops repo
+      - name: Checkout repo with PAT
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT_WEBHOOK_TOKEN }}
 
-      - name: Setup Git
+      - name: Setup Git identity
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-      - name: Get commit ID
-        id: get_commit_id
+      - name: Extract healthy commit ID
+        id: extract_commit
         run: echo "commit_id=${{ github.event.client_payload.healthy_revision }}" >> $GITHUB_ENV
 
-      - name: Revert values.yaml
+      - name: Revert nextjs/values.yaml to healthy commit
         run: |
           git checkout ${{ env.commit_id }} -- nextjs/values.yaml
           git add nextjs/values.yaml
           git commit -m "Revert values.yaml to healthy commit ${{ env.commit_id }}"
 
-      - name: Push changes to seminar-gitops
+      - name: Push to main using PAT
         run: |
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT_WEBHOOK_TOKEN }}@github.com/mrfour4/seminar-gitops.git
           git push origin HEAD:main
-        env:
-          GIT_TOKEN: ${{ secrets.GH_PAT_WEBHOOK_TOKEN }}
