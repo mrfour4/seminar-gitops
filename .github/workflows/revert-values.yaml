@@ -9,34 +9,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
       - name: Checkout seminar-gitops repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_PAT_WEBHOOK_TOKEN }}
 
-      # Setup Git config
       - name: Setup Git
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-      
-      # Get commit ID from payload
+
       - name: Get commit ID
         id: get_commit_id
         run: echo "commit_id=${{ github.event.client_payload.healthy_revision }}" >> $GITHUB_ENV
 
-      # Revert the values.yaml file
       - name: Revert values.yaml
         run: |
           git checkout ${{ env.commit_id }} -- nextjs/values.yaml
           git add nextjs/values.yaml
           git commit -m "Revert values.yaml to healthy commit ${{ env.commit_id }}"
 
-      # Push changes to remote
       - name: Push changes to seminar-gitops
         run: |
           git push origin HEAD:main
         env:
-          GH_PAT_WEBHOOK_TOKEN: ${{ secrets.GH_PAT_WEBHOOK_TOKEN }}
+          GIT_TOKEN: ${{ secrets.GH_PAT_WEBHOOK_TOKEN }}
