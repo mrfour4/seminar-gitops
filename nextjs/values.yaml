@@ -1,6 +1,6 @@
 image:
   repository: mrfour4uit/seminar-demo
-  tag: image-not-found
+  tag: image-not-found-please-build
   pullPolicy: IfNotPresent
 
 service:
